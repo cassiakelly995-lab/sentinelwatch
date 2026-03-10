@@ -142,6 +142,7 @@ export default function App() {
     <div style={{ minHeight:"100vh", padding:24 }}>
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
 
+      {/* Header */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:24 }}>
         <div>
           <div style={{ fontSize:22, fontWeight:800, color:"#f1f5f9", letterSpacing:"-0.02em" }}>⬡ SentinelWatch</div>
@@ -159,6 +160,7 @@ export default function App() {
         </div>
       </div>
 
+      {/* Stats */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:20 }}>
         {[
           { label:"CPU",             val:`${metrics.cpu}%`,   icon:"⚡", col: metrics.cpu>80?"239,68,68":"59,130,246"   },
@@ -176,14 +178,17 @@ export default function App() {
         ))}
       </div>
 
+      {/* Tabs */}
       <div style={{ display:"flex", gap:4, borderBottom:"1px solid rgba(255,255,255,0.06)", marginBottom:18 }}>
         {[["computer","🖥 Computador"],["email","📧 E-mails"],[`alerts`,`🔔 Alertas (${alerts.length})`]].map(([id,lbl])=>(
           <button key={id} style={tabSt(tab===id)} onClick={()=>setTab(id)}>{lbl}</button>
         ))}
       </div>
 
+      {/* Tab: Computer */}
       {tab==="computer" && (
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+          {/* Resources */}
           <div style={card}>
             <div style={ct}>Recursos do Sistema</div>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
@@ -192,4 +197,117 @@ export default function App() {
             </div>
             <GaugeBar value={metrics.cpu}    label="CPU"         color="#3b82f6"/>
             <GaugeBar value={metrics.memory} label="Memória RAM" color="#8b5cf6"/>
-            <GaugeBar value={
+            <GaugeBar value={metrics.disk}   label="Disco"       color="#10b981"/>
+            <div style={{ marginTop:14, paddingTop:14, borderTop:"1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ fontSize:11, color:"#475569", marginBottom:8, textTransform:"uppercase", letterSpacing:"0.08em" }}>Rede</div>
+              <div style={{ display:"flex", gap:20 }}>
+                <div><div style={{ fontSize:11, color:"#64748b" }}>Upload</div><div style={{ fontSize:14, fontWeight:700, color:"#3b82f6", fontFamily:"'IBM Plex Mono',monospace" }}>{metrics.net.up} MB/s</div></div>
+                <div><div style={{ fontSize:11, color:"#64748b" }}>Download</div><div style={{ fontSize:14, fontWeight:700, color:"#10b981", fontFamily:"'IBM Plex Mono',monospace" }}>{metrics.net.down} MB/s</div></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Processes */}
+          <div style={card}>
+            <div style={ct}>Processos Ativos</div>
+            {metrics.procs.map(p=>(
+              <div key={p.name} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                <span style={{ fontSize:12, color:"#cbd5e1", fontFamily:"'IBM Plex Mono',monospace" }}>{p.name}</span>
+                <div style={{ display:"flex", gap:16 }}>
+                  <span style={{ fontSize:11, color: parseFloat(p.cpu)>15?"#f59e0b":"#64748b" }}>CPU {p.cpu}%</span>
+                  <span style={{ fontSize:11, color:"#64748b" }}>{p.mem} MB</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Files */}
+          <div style={card}>
+            <div style={ct}>Atividade de Arquivos</div>
+            {metrics.files.map(f=>(
+              <div key={f.name} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                <div>
+                  <div style={{ fontSize:12, color:"#cbd5e1" }}>{f.name}</div>
+                  <div style={{ fontSize:10, color:"#475569", marginTop:2 }}>{f.time}</div>
+                </div>
+                <Pill color={f.action==="modificado"?"234,179,8":f.action==="criado"?"34,197,94":"59,130,246"}>{f.action}</Pill>
+              </div>
+            ))}
+          </div>
+
+          {/* Connections */}
+          <div style={card}>
+            <div style={ct}>Conexões de Rede</div>
+            {metrics.conns.map(c=>(
+              <div key={c.host} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+                <div>
+                  <div style={{ fontSize:12, color:"#cbd5e1", fontFamily:"'IBM Plex Mono',monospace" }}>{c.host}</div>
+                  <div style={{ fontSize:10, color:"#475569", marginTop:2 }}>:{c.port}</div>
+                </div>
+                <Pill color={c.status==="ESTABLISHED"?"34,197,94":"100,116,139"}>{c.status}</Pill>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Email */}
+      {tab==="email" && (
+        <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:14 }}>
+          <div style={card}>
+            <div style={ct}>Caixa de Entrada</div>
+            {MOCK_EMAILS.map(e=>(
+              <EmailRow key={e.id} email={e} keywords={keywords} senders={senders}/>
+            ))}
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+            <div style={card}>
+              <div style={ct}>Palavras-chave</div>
+              <div style={{ display:"flex", gap:6, marginBottom:12 }}>
+                <input style={inp} value={newKw} onChange={e=>setNewKw(e.target.value)} placeholder="nova palavra..." onKeyDown={e=>e.key==="Enter"&&addKw()}/>
+                <button style={btn} onClick={addKw}>+</button>
+              </div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                {keywords.map(k=>(
+                  <div key={k} style={{ display:"flex", alignItems:"center", gap:4, background:"rgba(234,179,8,0.1)", border:"1px solid rgba(234,179,8,0.2)", borderRadius:6, padding:"3px 8px" }}>
+                    <span style={{ fontSize:11, color:"#fbbf24" }}>{k}</span>
+                    <button onClick={()=>setKeywords(ks=>ks.filter(x=>x!==k))} style={{ background:"none", border:"none", color:"#64748b", cursor:"pointer", fontSize:12, padding:0, lineHeight:1 }}>×</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={card}>
+              <div style={ct}>Remetentes VIP</div>
+              <div style={{ display:"flex", gap:6, marginBottom:12 }}>
+                <input style={inp} value={newSnd} onChange={e=>setNewSnd(e.target.value)} placeholder="email@dominio.com" onKeyDown={e=>e.key==="Enter"&&addSnd()}/>
+                <button style={btn} onClick={addSnd}>+</button>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                {senders.map(s=>(
+                  <div key={s} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:"rgba(139,92,246,0.08)", border:"1px solid rgba(139,92,246,0.15)", borderRadius:6, padding:"5px 10px" }}>
+                    <span style={{ fontSize:11, color:"#a78bfa", fontFamily:"'IBM Plex Mono',monospace" }}>{s}</span>
+                    <button onClick={()=>setSenders(ss=>ss.filter(x=>x!==s))} style={{ background:"none", border:"none", color:"#64748b", cursor:"pointer", fontSize:14, padding:0 }}>×</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Alerts */}
+      {tab==="alerts" && (
+        <div style={card}>
+          <div style={ct}>Histórico de Alertas</div>
+          {alerts.map(a=>(
+            <div key={a.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+              <span style={{ fontSize:16 }}>{a.type==="warn"?"⚠️":a.type==="email"?"📧":"📁"}</span>
+              <span style={{ fontSize:13, color:"#cbd5e1", flex:1 }}>{a.msg}</span>
+              <span style={{ fontSize:11, color:"#475569", fontFamily:"'IBM Plex Mono',monospace" }}>{a.time}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
